@@ -23,6 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install flask
+    - run:  sudo systemctl daemon-reload
     - name: deploy changed file
       run: |
         sudo systemctl stop pythonapp.service
