@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install flask
-    - name: Test with pytest
+    - name: deploy changed file
       run: |
-        cp ${{github.workspace}}\application.py pythonapp
+        cp ${{github.workspace}}/application.py pythonapp
         sudo systemctl start pythonapp.service
