@@ -25,5 +25,6 @@ jobs:
         pip install flask
     - name: deploy changed file
       run: |
+        sudo systemctl stop pythonapp.service
         cp ${{github.workspace}}/application.py /home/gheactionsuser/pythonapp
         sudo systemctl start pythonapp.service
