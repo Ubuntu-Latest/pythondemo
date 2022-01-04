@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: my-label
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE
