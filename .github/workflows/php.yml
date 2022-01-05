@@ -1,36 +1,69 @@
-name: PHP ComposeR
-
+name: Buildss
 on:
   push:
-    branches: [ main ]
+    paths-ignore:
+      - '**.md'
   pull_request:
-    branches: [ main ]
+    paths-ignore:
+      - '**.md'
 
 jobs:
-  build:
+  build-and-deploy:
+    name: Build & deploy
 
     runs-on: my-label
 
+    strategy:
+      fail-fast: false
+      matrix:
+        install:
+          - "exe"
+          - "choco"
+
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate --strict
+      - name: Compile Composer-Setup
+        run: iscc src\composer.iss
+        shell: cmd
 
-    - name: Cache Composer packages
-      id: composer-cache
-      uses: actions/cache@v2
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-php-
+      - name: Build Chocolatey package
+        if: matrix.install == 'choco'
+        run: .\chocolatey\local\package.ps1
 
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress
+      - name: Install Composer-Setup.exe
+        if: matrix.install == 'exe'
+        run: builds\output\Composer-Setup.dev.exe /VERYSILENT /SUPPRESSMSGBOXES /DEV=C:\composer /LOG=C:\install.txt
+        shell: cmd
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
+      - name: Install Chocolatey package
+        if: matrix.install == 'choco'
+        # Upgrade as we are already installed.
+        run: choco upgrade -y composer --source .\chocolatey\local --params '"/Dev:C:\composer"' --ia '"/LOG=C:\install.txt"'
 
-    # - name: Run test suite
-    #   run: composer run-script test
+      - name: Upload install log
+        uses: actions/upload-artifact@v2
+        with:
+          name: install-${{ matrix.install }}-log
+          path: C:\install.txt
+
+      - name: Test install
+        run: |
+          Test-Path C:\composer\composer
+          Test-Path C:\composer\composer.bat
+          Test-Path C:\composer\composer.phar
+
+      - name: Prepend install location to PATH
+        # This is already in the registry PATH from the install but needs to be pulled in for subsequent Run steps.
+        run: echo "C:\composer" >> $GITHUB_PATH
+
+      - name: Run
+        run: composer --version
+        shell: cmd
+
+      - name: Run in bash
+        run: composer --version
+        shell: bash
