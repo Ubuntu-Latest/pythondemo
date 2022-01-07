@@ -1,5 +1,14 @@
-from application import application
-with application.test_client() as c:
-    response = c.get('/')
-    assert response.data == b'Hello World!'
-    assert response.status_code == 200
+# File hello_world.py:
+def hello():
+	return "Hello, World!"
+
+# File helloworld.py:
+def hello():
+	return "Hello, World!"
+
+# File callhelloworld.py:	
+import hello_world
+import helloworld
+
+hello_world.hello()
+helloworld.hello()
